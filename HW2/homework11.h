@@ -51,10 +51,10 @@ public:
     unordered_map<string,vector<Piece>> get_valid_move(Piece);
     Piece get_piece(int row,int col);
     bool judge_King(char);
-    void Bleft_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, char, int,Piece);
-    void Bright_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, char, int,Piece);
-    void Wleft_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, char, int,Piece);
-    void Wright_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, char, int,Piece);
+    void Bleft_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
+    void Bright_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
+    void Wleft_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
+    void Wright_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
     void remove(vector<Piece>&);
     float evaluation();
 

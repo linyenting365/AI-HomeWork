@@ -11,18 +11,29 @@ int main(int argc, char const * argv[])
     //play game
     board.print_board();
     //test move
-    Piece piece = board.get_piece(1,0);
+    Piece piece = board.get_piece(3,2);
     Piece piece1 = board.get_piece(3,4);
-    unordered_map<string,vector<Piece>> valid_move = board.get_valid_move(piece);
-    cout << valid_move.size() << endl;
-    for(auto n:valid_move){
-        cout << n.first <<" " << endl;
-        for(auto k:n.second){
-            cout << "row:" << k.row << "col:" << k.col << " ";
-            cout << k.is_empty << " ";
-            cout << k.color << endl;
-        }
-    }
+
+    // unordered_map<string,vector<Piece>> valid_move = board.get_valid_move(piece);
+
+    // for(auto move: valid_move){
+
+    //     Board temp_board = board;
+    //     Piece temp_piece= temp_board.get_piece(piece.row, piece.col);
+    //     Board new_board = game.simulation_move(temp_piece, move.first,temp_board,move.second);
+    //     new_board.print_board();
+    //     cout << "-----------------------"<< endl;
+    // } 
+    // unordered_map<string,vector<Piece>> valid_move = board.get_valid_move(piece);
+    // cout << valid_move.size() << endl;
+    // for(auto n:valid_move){
+    //     cout << n.first <<" " << endl;
+    //     for(auto k:n.second){
+    //         cout << "row:" << k.row << "col:" << k.col << " ";
+    //         cout << k.is_empty << " ";
+    //         cout << k.color << endl;
+    //     }
+    // }
     // vector<Piece> all_pieces = board.get_all_piece('b');
 
     // cout << board.b_left << " " << board.w_left << endl;
@@ -30,9 +41,9 @@ int main(int argc, char const * argv[])
     //     cout << n.color << " " << "row:" << n.row <<" " <<"col:" << n.col << endl;
     // }
     // vector<Board> all_moves= game.get_all_moves(board,'b');
-    // vector<Board> all_moves= game.get_all_moves(board,'b');
+    vector<Board> all_moves= game.get_all_moves(board,'b');
 
-    // Board board1 = game.min_max(board,3,'b');
+    // Board board1 = game.min_max(board,3,'w');
     // board1.print_board();
 
     if(board.Pmethod == "SINGLE"){
