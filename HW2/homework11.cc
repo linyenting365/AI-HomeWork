@@ -10,7 +10,6 @@ vector<vector<Piece>> Board::input(){
 
     infile.open("input.txt");
     infile >> Pmethod;
-    // cout << Pmethod << endl;
     string Pcolor;
     infile >> Pcolor;
     if(Pcolor == "BLACK"){
@@ -20,9 +19,7 @@ vector<vector<Piece>> Board::input(){
         max_color = 'w';
         min_color = 'b';
     }
-    // cout << Pcolor << endl;
     infile >> Pclock;
-    // cout << Pclock << endl;
     vector<vector<Piece>> board(8, vector<Piece>(8));
 
 
@@ -101,7 +98,6 @@ void Board::move_piece( Piece piece , int row , int col){
 void Board::print_board(){
     for( int i = 0; i < 8; ++i){
         for(int j = 0; j < 8; ++j){
-            // cout << board[i][j].color << " ";
             if(board[i][j].king){
                 cout << char(toupper(board[i][j].color)) << " ";
             }else{
@@ -133,9 +129,7 @@ void Board::remove(vector<Piece>& pieces){
                 b_king--;
             }
         }else if(piece.color == 'w'){
-            // cout <<"before remove"<< w_left << " ";
             w_left--;
-            // cout <<"after remove"<< w_left << endl;
             if(piece.king){
                 w_king--;
             }
@@ -143,6 +137,24 @@ void Board::remove(vector<Piece>& pieces){
 
 
     }
+}
+
+void Board::_remove(Piece piece){
+
+
+        board[piece.row][piece.col].color = '.';
+        board[piece.row][piece.col].king = false;
+        if(piece.color == 'b'){
+            b_left--;
+            if(piece.king){
+                b_king--;
+            }
+        }else if(piece.color == 'w'){
+            w_left--;
+            if(piece.king){
+                w_king--;
+            }
+        }
 }
 
 vector<Piece> Board::get_all_piece(char color){
@@ -160,108 +172,77 @@ vector<Piece> Board::get_all_piece(char color){
 
 }
 
-unordered_map<string,vector<Piece>> Board::get_valid_move(Piece piece){
-    unordered_map<string,vector<Piece>> moves;
+vector<Board> Board::get_valid_move(Piece piece){
+    vector<Board> moves;
     int left = piece.col - 1;
     int right = piece.col + 1;
     int row = piece.row;
     int count =0;
-    // cout<<row <<" "<< left << " " << right << endl;
     vector<Piece> skip;
+    // Piece skip;
+    vector<Board> all_valid_board;
+    Board new_board = board;
+    new_board.max_color = max_color;
+    new_board.min_color = min_color;
+    // cout <<new_board.max_color << endl;
     if(piece.color == 'w'|| piece.king){
-        Wleft_moves(moves,piece.king ,row-1 , max(row-3, -1), -1,piece ,left,skip,count+10);
-        Wright_moves(moves,piece.king,row-1, max(row-3, -1), -1,piece ,right,skip,count+20);
+        Wleft_moves(moves,new_board,piece.king,row - 1, max(row-3, -1), -1,piece ,left,skip);
+        Wright_moves(moves,new_board,piece.king,row - 1, max(row-3, -1), -1,piece ,right,skip);
     }
     
     if(piece.color == 'b'||piece.king){
-        Bleft_moves(moves,piece.king,row + 1, min(row+3, 8), 1,piece ,left,skip,count+30);
-        Bright_moves(moves,piece.king,row + 1, min(row+3, 8), 1,piece ,right,skip,count+40);
+        Bleft_moves(moves,new_board,piece.king,row + 1, min(row+3, 8), 1,piece ,left,skip);
+        Bright_moves(moves,new_board,piece.king,row + 1, min(row+3, 8), 1,piece ,right,skip);
     }
     return moves;
 }
 
-void Board::Bleft_moves(unordered_map<string,vector<Piece>> &moves,bool is_king,int start, int stop, int step, Piece& start_piece, int left,vector<Piece>skipped,int count){
-    // Piece last;
-    vector<Piece> last;
-    // cout << start << " ";
-    // cout << stop << endl;
-    cout << "Bleft" << endl;
+void Board::Bleft_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int left,vector<Piece> skipped){
+    Piece last;
     for(int i = start ; i <= stop; ++i){
-        // cout << "left_move:" << i << endl;
-        if(left < 0){
+        if(left < 0 || i >= 8 || i < 0){
             break;
         }
 
-        Piece cur_piece = board[i][left];
-
-        // cout << cur_piece.row << cur_piece.col << endl;
-        // cout << cur_piece.color << color << endl;
+        Piece cur_piece = res_board.board[i][left];
         if(cur_piece.color=='.'){
-            // cout <<  "left:is_blank" <<endl;
-            if(!skipped.empty() && last.empty()){
-                // cout << "left:skip one" << endl;
-                break;
-            }else if (!skipped.empty()){
-                // cout << "left:double skip" << " ";
-                // moves[to_string(i)+to_string(left)]=last;
-                count++;
-                if(!moves.count(to_string(i)+to_string(left))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)].push_back(sp);
-                    }
-                }
+            if(!last.is_empty){
+                res_board._remove(last);
+                res_board.move_piece(start_piece,i,left);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = left;
 
-
-            }else{
-                // cout << "left:no need to skip" << " ";
-                // cout << i  << left << endl;
-                moves[to_string(i)+to_string(left)]=last;
+            }else if (skipped.empty()){
+                res_board.move_piece(start_piece, i,left);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = left;
             }
             int row = stop;
 
-            if(!last.empty()){
-                // cout << "left:last is not empty" << " ";
+            if(!last.is_empty){
                 row = min(i + 3, 7);
-            }else{
-                break;
+                Bleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,left - 1,skipped);
+                Bright_moves(moves,res_board,is_king,i + step, row, step,start_piece,left + 1,skipped);
+                if(is_king){
+                    row = max(i - 3, 0);
+                    Wleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left - 1,skipped);
+                    Wright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left + 1,skipped);
+                }                
             }
 
-            // cout <<"before go " << i + step <<" "<< left <<endl;
-            Bleft_moves(moves,is_king,i + step, row, step,start_piece,left - 1,skipped,count);
-            Bright_moves(moves,is_king,i + step, row, step,start_piece,left + 1,skipped,count);
-            if(is_king){
-                row = max(i - 3, 0);
-                Wleft_moves(moves,is_king,i-step, row, -step,start_piece,left - 1,skipped,count);
-            }
             break;
 
         }else if(cur_piece.color == start_piece.color){
-            // cout << cur_piece.color << endl;
-            // color is same as previous step
-            if(cur_piece.row == start_piece.row &&cur_piece.col == start_piece.col){
-                count++;
-                if(!moves.count(to_string(i)+to_string(left))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)].push_back(sp);
-                    }
-                }
-            }
             break;
         }else{
-            // cout<< last.is_empty <<  endl;
-            // cout << last.color << cur_piece.color << endl; 
-            if(!last.empty() && last[0].color == cur_piece.color) break;
-            // last = cur_piece;
-            last.push_back(cur_piece);
-            // cout << last.color << endl;
+            if(!last.is_empty && last.color == cur_piece.color) break;
+            last = cur_piece;
             skipped.push_back(cur_piece);
         }
         left --;
@@ -271,76 +252,50 @@ void Board::Bleft_moves(unordered_map<string,vector<Piece>> &moves,bool is_king,
 }
 
 
-void Board::Bright_moves(unordered_map<string,vector<Piece>> &moves,bool is_king,int start, int stop, int step, Piece& start_piece, int right,vector<Piece>  skipped,int count){
-    // Piece last;
-    vector<Piece> last;
-    cout << "Bright" << endl;
+void Board::Bright_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int right,vector<Piece> skipped){
+    Piece last;
     for(int i = start; i <= stop; ++i){
-        // cout << "right_move:" << i << endl;
-        if(right >=8){
+        if(right >=8 || i >=8 || i < 0){
             break;
         }
-        // cout << i << " " << right << endl;
-        Piece cur_piece = board[i][right];
-        // cout << cur_piece.color<< endl;
+        Piece cur_piece = res_board.board[i][right];
         if(cur_piece.color=='.'){
-            // cout << "right:is_blank" <<endl;
-            if(!skipped.empty() && last.empty() ){
-                // cout << "right:skip one" << endl;
-                break;
-            }else if (!skipped.empty()){
-                // cout << "right:double skip" << " ";
-                // moves[to_string(i)+to_string(right)]=last;
-                count++;
-                if(!moves.count(to_string(i)+to_string(right))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)].push_back(sp);
-                    }
-                }
+            if(!last.is_empty){
+                res_board._remove(last);
+                res_board.move_piece(start_piece,i,right);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = right;
 
-            }else{
-                moves[to_string(i)+to_string(right)]=last;
+            }else if(skipped.empty()){
+                res_board.move_piece(start_piece, i,right);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = right;
             }
             int row=stop;
-            if(!last.empty()){
-                row = min(i + 3, 7);    
-            }else{
-                break;
+            if(!last.is_empty){
+                row = min(i + 3, 7);
+                Bleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,right - 1,skipped);
+                Bright_moves(moves,res_board,is_king,i + step, row, step,start_piece,right + 1,skipped);
+                if(is_king){
+                    row = max(i - 3, 0);
+                    Wleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right - 1,skipped);
+                    Wright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right + 1,skipped);
+                }                   
             }
 
-            Bleft_moves(moves,is_king,i + step, row, step,start_piece,right - 1,skipped,count);
-            Bright_moves(moves,is_king,i + step, row, step,start_piece,right + 1,skipped,count);
-            if(is_king){
-                row = max(i - 3, 0);
-                Wright_moves(moves,is_king,i -step, row, -step,start_piece,right + 1,skipped,count); 
-
-            }
-        break;
+            break;
 
         }else if(cur_piece.color == start_piece.color){
-            // color is same as previous step
-            // cout << cur_piece.color << endl;
-            if(cur_piece.row == start_piece.row &&cur_piece.col == start_piece.col){
-                count++;
-                if(!moves.count(to_string(i)+to_string(right))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)].push_back(sp);
-                    }
-                }
-            }
             break;
         }else{
-            // cout << "can jump" << endl;
-            if(!last.empty() && last[0].color == cur_piece.color) break;
-            last.push_back(cur_piece);
+            if(!last.is_empty && last.color == cur_piece.color) break;
+            last = cur_piece;
             skipped.push_back(cur_piece);
         }
         right++;
@@ -349,90 +304,52 @@ void Board::Bright_moves(unordered_map<string,vector<Piece>> &moves,bool is_king
     return;
 }
 
-void Board::Wleft_moves(unordered_map<string,vector<Piece>> &moves,bool is_king,int start, int stop, int step, Piece& start_piece, int left,vector<Piece>  skipped,int count){
-    // Piece last;
-    vector<Piece> last;
-    cout << "Wleft" << endl;
-    // cout << start << " ";
-    // cout << stop << endl;
-
+void Board::Wleft_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int left,vector<Piece> skipped){
+    Piece last;
     for(int i = start ; i >= stop; --i){
-        // cout << "left_move:" << i << endl;
-        if(left < 0){
+        if(left < 0 || i < 0 || i >=8){
             break;
         }
 
-        Piece cur_piece = board[i][left];
+        Piece cur_piece = res_board.board[i][left];
         if(cur_piece.color=='.'){
-            // cout <<  "left:is_blank" <<endl;
-            if(!skipped.empty()&& last.empty()){
-                // cout << "left:skip one" << endl;
-                break;
-            }else if (!skipped.empty()){
-                // cout << "left:double skip" << " ";
-                // moves[to_string(i)+to_string(left)]=last;
-                count++;
-                if(!moves.count(to_string(i)+to_string(left))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)].push_back(sp);
-                    }
-                }
+            if(!last.is_empty){
+                res_board._remove(last);
+                res_board.move_piece(start_piece,i,left);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = left;
 
-            }else{
-                // cout << "left:no need to skip" << " ";
-                // cout << i  << left << endl;
-                moves[to_string(i)+to_string(left)]=last;
+
+            }else if (skipped.empty()){
+                res_board.move_piece(start_piece, i,left);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = left;
             }
             int row = stop;
-
-            if(!last.empty()){
-                // cout << "left:last is not empty" << " ";
-                row = max(i - 3, 0);  
-                // if(step == -1){
-                //     row = max(i - 3, 0);
-                //     // cout << row << endl;
-                // }else{
-                //     // cout << i <<" ";
-                //     row = min(i + 3, 7);
-                //     // cout << row << endl;
-                // }
-            }else{
-                break;
+            if(!last.is_empty){
+                row = max(i - 3, 0);
+                Wleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,left - 1,skipped);
+                Wright_moves(moves,res_board,is_king,i + step, row, step,start_piece,left + 1,skipped);
+                if(is_king){
+                    row = min(i + 3, 7);
+                    Bleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left - 1,skipped);
+                    Bright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left + 1,skipped);
+                }  
             }
 
-            // cout <<"before go " << i + step <<" "<< left <<endl;
-            Wleft_moves(moves,is_king,i+ step, row, step,start_piece,left - 1,skipped,count);
-            Wright_moves(moves,is_king,i + step, row, step,start_piece,left + 1,skipped,count);
-            if(is_king){
-                row = min(i + 3, 7);
-                Bleft_moves(moves,is_king,i - step, row, -step,start_piece,left - 1,skipped,count);
-            }
             break;
 
         }else if(cur_piece.color == start_piece.color){
-            // color is same as previous step
-            // cout << cur_piece.color << endl;
-            if(cur_piece.row == start_piece.row &&cur_piece.col == start_piece.col){
-                count++;
-                if(!moves.count(to_string(i)+to_string(left))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(left)].push_back(sp);
-                    }
-                }
-            }
             break;
         }else{
-            if(!last.empty() && last[0].color == cur_piece.color) break;
-            last.push_back(cur_piece);
-            // cout << last.color << endl;
+            if(!last.is_empty && last.color == cur_piece.color) break;
+            last = cur_piece;
             skipped.push_back(cur_piece);
         }
         left --;
@@ -442,82 +359,49 @@ void Board::Wleft_moves(unordered_map<string,vector<Piece>> &moves,bool is_king,
 }
 
 
-void Board::Wright_moves(unordered_map<string,vector<Piece>> &moves,bool is_king,int start, int stop, int step, Piece& start_piece, int right,vector<Piece> skipped,int count){
-    // Piece last;
-    vector<Piece> last;
-    // cout<< "hi" << endl;
-    // cout << start << stop << endl;
-    cout << "Wright" << endl;
+void Board::Wright_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int right,vector<Piece> skipped){
+    Piece last;
     for(int i = start; i >= stop; --i){
-        // cout << "right_move:" << i << endl;
-        if(right >=8){
+        if(right >=8|| i <0 || i >=8){
             break;
         }
-        // cout << i << " " << right << endl;
-        Piece cur_piece = board[i][right];
-        // cout << cur_piece.color<< endl;
+        Piece cur_piece = res_board.board[i][right];
         if(cur_piece.color=='.'){
-            // cout << "right:is_blank" <<endl;
-            if(!skipped.empty() && last.empty()){
-                // cout << "right:skip one" << endl;
-                break;
-            }else if (!skipped.empty()){
-                // cout << "right:double skip" << " ";
-                // moves[to_string(i)+to_string(right)]=last;
-                count++;
-                if(!moves.count(to_string(i)+to_string(right))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)].push_back(sp);
-                    }
-                }
-            }else{
-                moves[to_string(i)+to_string(right)]=last;
+            if(!last.is_empty){
+                res_board._remove(last);
+                res_board.move_piece(start_piece,i,right);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = right;
+            }else if (skipped.empty()){
+                res_board.move_piece(start_piece, i,right);
+                cout << res_board.evaluation() << endl;
+                res_board.print_board();
+                moves.push_back(res_board);
+                start_piece.row = i;
+                start_piece.col = right;
             }
             int row=stop;
-            if(!last.empty()){
-                row = max(i - 3, 0);  
-                // if(step == -1){
-                //     row = max(i - 3, 0);
-                // }else{
-                //     row = min(i + 3, 7);
-                // }
-            }else{
-                break;
+            if(!last.is_empty){
+                row = max(i - 3, 0);
+                Wleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,right - 1,skipped);
+                Wright_moves(moves,res_board,is_king,i + step, row, step,start_piece,right + 1,skipped);
+                if(is_king){
+                    row = min(i + 3, 7);
+                    Bleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right - 1,skipped);
+                    Bright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right + 1,skipped);
+                } 
             }
 
-            // cout <<"before go " << row + step <<" "<< right <<endl;
-            Wleft_moves(moves,is_king,i + step, row, step,start_piece,right - 1,skipped,count);
-            Wright_moves(moves,is_king,i + step, row, step,start_piece,right + 1,skipped,count);
-            if(is_king){
-                row = min(i + 3, 7);
-                Bright_moves(moves,is_king,i - step, row, -step,start_piece,right + 1,skipped,count);
-            }
-        break;
+            break;
 
         }else if(cur_piece.color == start_piece.color){
-            // color is same as previous step
-            // cout << cur_piece.color << endl;
-            if(cur_piece.row == start_piece.row &&cur_piece.col == start_piece.col){
-
-                if(!moves.count(to_string(i)+to_string(right))){
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)+to_string(count)].push_back(sp);
-                    }
-                }else{
-                    for(auto sp: skipped){
-                        moves[to_string(i)+to_string(right)].push_back(sp);
-                    }
-                }
-            }
             break;
         }else{
-            // cout << "can jump" << endl;
-            if(!last.empty() && last[0].color == cur_piece.color) break;
-            last.push_back(cur_piece);
+            if(!last.is_empty && last.color == cur_piece.color) break;
+            last = cur_piece;
             skipped.push_back(cur_piece);
         }
         right++;
@@ -529,8 +413,6 @@ void Board::Wright_moves(unordered_map<string,vector<Piece>> &moves,bool is_king
 
 Board Game::min_max(Board board , int depth, char player ){
     if (depth ==0 || board.winner() != ' '){
-        // cout<< board.evaluation() << endl;
-        // board.print_board();
         return board;
     }
     // cout << board.max_color << endl;
@@ -574,41 +456,16 @@ Board Game::min_max(Board board , int depth, char player ){
     }
 }
 
-Board Game::simulation_move(Piece piece, string move,Board board, vector<Piece>&skipped){
-    board.move_piece( piece, move[0] - '0' , move[1] - '0');
-    board.remove(skipped);
-    // cout <<"# of left:" <<  board.w_left <<" "<<  board.b_left<< endl;
-    return board;
-}
-
 
 vector<Board> Game::get_all_moves(Board board, char color){
     vector<Board> moves;
     vector<Piece> all_pieces = board.get_all_piece(color);
-    int max_jump = INT_MIN;
     for(auto piece:all_pieces){
-       unordered_map<string,vector<Piece>> valid_move = board.get_valid_move(piece);
-
-        for(auto move:valid_move){
-            int jump_size = valid_move[move.first].size();
-            max_jump = max(max_jump, jump_size);
-            cout <<max_jump<< endl;
-        }   
-       for(auto move: valid_move){
-           if(valid_move[move.first].size() == max_jump){
-               Board temp_board = board;
-               Piece temp_piece= temp_board.get_piece(piece.row, piece.col);
-               Board new_board = simulation_move(temp_piece, move.first,temp_board,move.second);
-               new_board.print_board();
-               cout << "-----------------------"<< endl;
-               moves.push_back(new_board);
-           }
-            
-        } 
+        Board temp_board = board;
+        vector<Board> temp = temp_board.get_valid_move(piece);
+        moves.insert(moves.end(), temp.begin(),temp.end());
     }
-
     return moves;
-    
 }
 
 

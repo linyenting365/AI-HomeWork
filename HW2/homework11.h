@@ -48,14 +48,15 @@ public:
     //evaluate 
     vector<Piece> get_all_piece(char);
     char winner();
-    unordered_map<string,vector<Piece>> get_valid_move(Piece);
+    vector<Board> get_valid_move(Piece);
     Piece get_piece(int row,int col);
     bool judge_King(char);
-    void Bleft_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
-    void Bright_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
-    void Wleft_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
-    void Wright_moves(unordered_map<string,vector<Piece>>&,bool,int, int, int, Piece&, int,vector<Piece>,int);
+    void Bleft_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
+    void Bright_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
+    void Wleft_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
+    void Wright_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
     void remove(vector<Piece>&);
+    void _remove(Piece);
     float evaluation();
 
 
@@ -72,7 +73,7 @@ public:
 
     Board min_max(Board, int ,char player);
     vector<Board> get_all_moves(Board, char);
-    Board simulation_move(Piece, string,Board, vector<Piece>&);
+    // Board simulation_move(Piece, string,Board, vector<Piece>&);
 
 
 

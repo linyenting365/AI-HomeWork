@@ -11,11 +11,11 @@ int main(int argc, char const * argv[])
     //play game
     board.print_board();
     //test move
-    Piece piece = board.get_piece(3,2);
+    Piece piece = board.get_piece(6,3);
     Piece piece1 = board.get_piece(3,4);
 
-    // unordered_map<string,vector<Piece>> valid_move = board.get_valid_move(piece);
-
+    // vector<Board> valid_move = board.get_valid_move(piece,board);
+    // vector<Board> all_moves= game.get_all_moves(board,'b');
     // for(auto move: valid_move){
 
     //     Board temp_board = board;
@@ -41,11 +41,12 @@ int main(int argc, char const * argv[])
     //     cout << n.color << " " << "row:" << n.row <<" " <<"col:" << n.col << endl;
     // }
     // vector<Board> all_moves= game.get_all_moves(board,'b');
-    vector<Board> all_moves= game.get_all_moves(board,'b');
+    // vector<Board> all_moves= game.get_all_moves(board,'b');
 
-    // Board board1 = game.min_max(board,3,'w');
-    // board1.print_board();
-
+    Board board1 = game.min_max(board,3,'b');
+    // cout << board.max_color << endl;
+    cout << "______________________" << endl;
+    board1.print_board();
     if(board.Pmethod == "SINGLE"){
         //single move
 
