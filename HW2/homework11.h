@@ -12,6 +12,7 @@
 #include<list>
 #include <limits>
 
+
 using namespace std;
 // float inf = numeric_limits<float>::infinity();
 
@@ -31,6 +32,7 @@ class Board{
 public:
 
     vector<vector<Piece>> board;
+    vector<pair<int,int>> path;
     vector<vector<Piece>> input();
     void print_board();
     void move_piece(Piece,int ,int );
@@ -49,6 +51,8 @@ public:
     vector<Piece> get_all_piece(char);
     char winner();
     vector<Board> get_valid_move(Piece);
+    void count_black(int, int);
+    void count_white(int, int);
     Piece get_piece(int row,int col);
     bool judge_King(char);
     void Bleft_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
@@ -65,7 +69,6 @@ public:
     
 };
 
-
 class Game{
 public:
 
@@ -73,7 +76,7 @@ public:
 
     Board min_max(Board, int ,char player);
     vector<Board> get_all_moves(Board, char);
-    // Board simulation_move(Piece, string,Board, vector<Piece>&);
+    string path_trans(int, int);
 
 
 
