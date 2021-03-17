@@ -74,7 +74,7 @@ public:
 
 
 
-    Board min_max(Board, int ,char player);
+    Board min_max(Board, int ,char player,float,float);
     vector<Board> get_all_moves(Board, char);
     string path_trans(int, int);
 

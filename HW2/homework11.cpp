@@ -40,11 +40,11 @@ int main(int argc, char const * argv[])
     // }
 
     
-    vector<Board> valid= game.get_all_moves(board,'b');
-    for(auto n:valid){
-        cout << n.evaluation() << endl;
-        n.print_board();
-    }
+    // vector<Board> valid= game.get_all_moves(board,'b');
+    // for(auto n:valid){
+    //     cout << n.evaluation() << endl;
+    //     n.print_board();
+    // }
     // for(auto move: valid_move){
 
     //     Board temp_board = board;
@@ -83,15 +83,15 @@ int main(int argc, char const * argv[])
 
 
     if(board.Pmethod == "SINGLE"){
-        // Board board1 = game.min_max(board,7,board.max_color);
-        // cout << "______________________" << endl;
-        // board1.print_board();
-        // for(int i = 0; i < board1.path.size();i++){
-        //     if(i < board1.path.size()-1){
-        //         cout<<game.path_trans(board1.path[i].first,board1.path[i].second)<<" ";
-        //         cout<<game.path_trans(board1.path[i+1].first,board1.path[i+1].second)<<endl;;
-        //     }
-        // }
+        Board board1 = game.min_max(board,6,board.max_color,INT_MIN,INT_MAX);
+        cout << "______________________" << endl;
+        board1.print_board();
+        for(int i = 0; i < board1.path.size();i++){
+            if(i < board1.path.size()-1){
+                cout<<game.path_trans(board1.path[i].first,board1.path[i].second)<<" ";
+                cout<<game.path_trans(board1.path[i+1].first,board1.path[i+1].second)<<endl;;
+            }
+        }
 
     } else {
 

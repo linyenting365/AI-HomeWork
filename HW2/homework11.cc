@@ -210,6 +210,12 @@ vector<Board> Board::get_valid_move(Piece piece){
     return moves;
 }
 
+// function move 
+// if cannot move push return 
+// 4 dir
+
+
+
 void Board::Bleft_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int left,vector<Piece> skipped){
     Piece last;
     // cout<< "Bleft" << endl;
@@ -469,7 +475,7 @@ void Board::Wright_moves(vector<Board>& moves,Board res_board,bool is_king,int s
 }
 
 
-Board Game::min_max(Board board , int depth, char player ){
+Board Game::min_max(Board board , int depth, char player,float alp,float beta ){
     // cout << player << endl;
     if (depth ==0 || board.winner() != ' '){
         return board;
@@ -484,15 +490,17 @@ Board Game::min_max(Board board , int depth, char player ){
             //cout<< "depth_max" <<depth <<endl;
             //move.print_board();
             // cout << board.min_color << endl;
-            Board evaluation = min_max(move, depth -1,board.min_color);
+            Board evaluation = min_max(move, depth -1,board.min_color,alp,beta);
             //cout << "b left: " << evaluation.b_left << " "<<"w left: "<< evaluation.w_left << endl;
             //evaluation.print_board();
             //cout <<"cur_max"<<MAX_eval <<"evaluate:"<<evaluation.evaluation() << endl;
             MAX_eval = max( MAX_eval, evaluation.evaluation());
+            alp = max (alp , MAX_eval);
             //cout<<"Max:" <<MAX_eval << endl;
             if(MAX_eval == evaluation.evaluation()){
                 best_move = move;
             }
+            if( alp >= beta) break;
         }
         return best_move;
         
@@ -506,15 +514,18 @@ Board Game::min_max(Board board , int depth, char player ){
             // cout<< "depth_min" <<depth <<endl;
             // move.print_board();
 
-            Board evaluation = min_max(move, depth -1,board.max_color);
+            Board evaluation = min_max(move, depth -1,board.max_color,alp,beta);
             //cout << "b left: " << evaluation.b_left << " "<<"w left: "<< evaluation.w_left << endl;
             //evaluation.print_board();
             //cout <<"cur_min: "<<MIN_eval <<"  evaluate: "<<evaluation.evaluation() << endl;
             MIN_eval = min( MIN_eval, evaluation.evaluation());
             //cout<<"Min:" <<MIN_eval << endl;
+            beta = min ( beta , MIN_eval);
             if(MIN_eval == evaluation.evaluation()){
                 best_move = move;
             }
+            
+            if( alp >= beta) break;
         }
         return best_move;
     }
