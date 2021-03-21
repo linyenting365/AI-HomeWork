@@ -18,13 +18,12 @@ using namespace std;
 
 class Piece{
 public:
-    int row;
-    int col;
+
     char color;
-    bool king = false;
+    bool king ;
     bool is_empty = true;
-    Piece():row(-1),col(-1) {}
-	Piece(int row, int col):row(row),col(col) {}
+    Piece():color('.'),king(false) {}
+	Piece(char color, bool king):color(color),king(king) {}
 
 };
 
@@ -35,7 +34,7 @@ public:
     vector<pair<int,int>> path;
     vector<vector<Piece>> input();
     void print_board();
-    void move_piece(Piece,int ,int );
+    void move_piece(int,int,int ,int );
     int b_left = 0;
     int w_left = 0;
     int b_king = 0;
@@ -48,20 +47,23 @@ public:
     double Pclock;
 
     //evaluate 
-    vector<Piece> get_all_piece(char);
+    vector<pair<int,int>> get_all_piece(char);
     char winner();
-    vector<Board> get_valid_move(Piece);
-    void count_black(int, int);
-    void count_white(int, int);
+    void Jump(vector<Board>&,Board,int,int);
+    bool canJump(Board,int,int);
+    bool canMove(Board,int,int);
+    void Move(vector<Board>&,Board,int,int);
     Piece get_piece(int row,int col);
+
     bool judge_King(char);
     void Bleft_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
     void Bright_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
     void Wleft_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
     void Wright_moves(vector<Board>&,Board,bool,int, int, int, Piece, int,vector<Piece>);
-    void remove(vector<Piece>&);
-    void _remove(Piece);
+    void _remove(int row, int col);
     float evaluation();
+
+
 
 
     Board():board({{}}) {}

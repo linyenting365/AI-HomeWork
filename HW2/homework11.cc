@@ -27,8 +27,6 @@ vector<vector<Piece>> Board::input(){
         string temp;
         infile >> temp;
         for(int j = 0; j < 8; ++j){
-            board[i][j].row = i;
-            board[i][j].col = j;
             board[i][j].color = tolower(temp[j]);
             board[i][j].king = judge_King(temp[j]);
             if(board[i][j].color == 'b'){
@@ -80,15 +78,8 @@ float Board::evaluation(){
 
 
 
-void Board::move_piece( Piece piece , int row , int col){
-    char temp_color;
-    bool temp_king;
-    temp_color = board[row][col].color;
-    temp_king = board[row][col].king;
-    board[row][col].color = board[piece.row][piece.col].color;
-    board[row][col].king = board[piece.row][piece.col].king;
-    board[piece.row][piece.col].king = temp_king;
-    board[piece.row][piece.col].color =temp_color;
+void Board::move_piece(int cur_row,int cur_col, int row , int col){
+    swap(board[cur_row][cur_col], board[row][col]);
 
     if(row == 7 || row == 0){
         if(board[row][col].color == 'b'){
@@ -121,53 +112,31 @@ Piece Board::get_piece(int row,int col){
     return board[row][col];
 }
 
-void Board::remove(vector<Piece>& pieces){
-    for(auto piece:pieces){
-        if(piece.is_empty){
-            break;
-        }else{
-            board[piece.row][piece.col].color = '.';
-            board[piece.row][piece.col].king = false;
-        }
-        if(piece.color == 'b'){
-            b_left--;
-            if(piece.king){
-                b_king--;
-            }
-        }else if(piece.color == 'w'){
-            w_left--;
-            if(piece.king){
-                w_king--;
-            }
-        }
 
 
-    }
-}
-
-void Board::_remove(Piece piece){
-    board[piece.row][piece.col].color = '.';
-    board[piece.row][piece.col].king = false;
-    if(piece.color == 'b'){
+void Board::_remove(int row, int col){
+    board[row][col].color = '.';
+    board[row][col].king = false;
+    if(board[row][col].color == 'b'){
         b_left--;
-        if(piece.king){
+        if(board[row][col].king){
             b_king--;
         }
-    }else if(piece.color == 'w'){
+    }else if(board[row][col].color == 'w'){
         w_left--;
-        if(piece.king){
+        if(board[row][col].king){
             w_king--;
         }
     }
 }
 
-vector<Piece> Board::get_all_piece(char color){
-    vector<Piece> get_all;
+vector<pair<int,int>> Board::get_all_piece(char color){
+    vector<pair<int,int>> get_all;
 
     for( int i = 0; i < 8; ++i){
         for(int j = 0; j < 8; ++j){
             if(board[i][j].color == color){
-                get_all.push_back(board[i][j]);
+                get_all.push_back(make_pair(i,j));
             }
         }
     }
@@ -176,327 +145,300 @@ vector<Piece> Board::get_all_piece(char color){
 
 }
 
-vector<Board> Board::get_valid_move(Piece piece){
-    vector<Board> moves;
-    int left = piece.col - 1;
-    int right = piece.col + 1;
-    int row = piece.row;
-    int count =0;
-    vector<Piece> skip;
-    // Piece skip;
-    vector<Board> all_valid_board;
-    Board new_board;
-    // new_board.print_board();
-    new_board.board = board;
-    new_board.max_color = max_color;
-    new_board.min_color = min_color;
-    new_board.b_left = b_left;
-    new_board.w_left = w_left;
-    new_board.b_king = b_king;
-    new_board.w_king = w_king;
-    new_board.path.push_back(make_pair(piece.row,piece.col));
 
-    // cout <<"valid_move:"<< new_board.b_left << new_board.w_left << endl;
-    if(piece.color == 'w'|| piece.king){
-        Wleft_moves(moves,new_board,piece.king,row - 1, max(row-3, -1), -1,piece ,left,skip);
-        Wright_moves(moves,new_board,piece.king,row - 1, max(row-3, -1), -1,piece ,right,skip);
+bool Board::canJump(Board cur_board ,int row , int col){
+    //cout << "in canJUMP" << endl;
+    if(cur_board.board[row][col].color == 'w'){
+        //cout << "in w can jump" << endl;
+        if(row -1 > -1 && col-1 > -1 && row -2 > -1 && col -2 > -1 && cur_board.board[row -1][col-1].color == 'b' && cur_board.board[row-1][col-1].color == '.'){
+            return true;
+        }
+        if(row -1 > -1 && col+1 < 8 && row -2 > -1 && col + 2 < 8 && cur_board.board[row -1][col+1].color== 'b' &&  cur_board.board[row-2][col+2].color == '.'){
+            return true;
+        }
+
     }
+    if(cur_board.board[row][col].color == 'b'){
+        // cout << "in b can jump" << endl;
+        if(row + 1 < 8 && col-1 > -1 && row + 2 < 8 && col -2 > -1 && cur_board.board[row +1][col-1].color == 'w'&& cur_board.board[row+2][col-2].color == '.'){
+            return true;
+        }
+        if(row + 1 < 8 && col+1 < 8 && row +2 < 8 && col +2 < 8 && cur_board.board[row +1][col+1].color== 'w' &&  cur_board.board[row +2][col+2].color == '.'){
+            return true;
+        }
+
+    }
+
+    if(cur_board.board[row][col].color == 'w' && cur_board.board[row][col].king){
+
+        if(row -1 > -1 && col-1 > -1 && row -2 > -1 && col -2 > -1 && cur_board.board[row -1][col-1].color == 'b' && cur_board.board[row-1][col-1].color == '.'){
+            return true;
+        }
+        if(row -1 > -1 && col+1 < 8 && row -2 > -1 && col + 2 < 8 && cur_board.board[row -1][col+1].color== 'b' &&  cur_board.board[row-2][col+2].color == '.'){
+            return true;
+        }
+        if(row + 1 < 8 && col-1 > -1 && row + 2 < 8 && col -2 > -1 && cur_board.board[row +1][col-1].color == 'b'&& cur_board.board[row+2][col-2].color == '.'){
+            return true;
+        }
+        if(row + 1 < 8 && col+1 < 8 && row +2 < 8 && col +2 < 8 && cur_board.board[row +1][col+1].color== 'b' &&  cur_board.board[row +2][col+2].color == '.'){
+            return true;
+        }
+
+    }
+
+    if(cur_board.board[row][col].color == 'b' && cur_board.board[row][col].king){
+
+        if(row -1 > -1 && col-1 > -1 && row -2 > -1 && col -2 > -1 && cur_board.board[row -1][col-1].color == 'w' && cur_board.board[row-1][col-1].color == '.'){
+            return true;
+        }
+        if(row -1 > -1 && col+1 < 8 && row -2 > -1 && col + 2 < 8 && cur_board.board[row -1][col+1].color== 'w' &&  cur_board.board[row-2][col+2].color == '.'){
+            return true;
+        }
+        if(row + 1 < 8 && col-1 > -1 && row + 2 < 8 && col -2 > -1 && cur_board.board[row +1][col-1].color == 'w'&& cur_board.board[row+2][col-2].color == '.'){
+            return true;
+        }
+        if(row + 1 < 8 && col+1 < 8 && row +2 < 8 && col +2 < 8 && cur_board.board[row +1][col+1].color== 'w' &&  cur_board.board[row +2][col+2].color == '.'){
+            return true;
+        }
+
+    }
+
+    return false;
+
+}
+
+bool Board::canMove(Board cur_board, int row,int col){
+    //cout << "in canMove" << endl;
+    if(cur_board.board[row][col].color == 'w' || cur_board.board[row][col].king){
+        if(row -1 > -1 && col-1 > -1 && cur_board.board[row -1][col-1].color == '.'){
+            // cout << row << col << endl;
+            return true;
+        }
+        if(row -1 > -1 && col+1 < 8 && cur_board.board[row -1][col+1].color == '.'){
+            //cout << row << col << endl;
+            return true;
+        }
+
+    }
+    if(cur_board.board[row][col].color == 'b' || cur_board.board[row][col].king){
+        if(row + 1 < 8 && col-1 > -1 && cur_board.board[row +1][col-1].color == '.'){
+            //cout << row << col << endl;
+            return true;
+        }
+        if(row + 1 < 8 && col+1 < 8 && cur_board.board[row +1][col+1].color == '.'){
+            //cout << row << col << endl;
+            return true;
+        }
+
+    }
+
+    //cout << "in canMove end" << endl;
+    return false;
+}
+
+
+
+
+
+void Board::Jump(vector<Board>& boards,Board cur_board,int row ,int col){
     
-    if(piece.color == 'b'||piece.king){
-        Bleft_moves(moves,new_board,piece.king,row + 1, min(row+3, 8), 1,piece ,left,skip);
-        Bright_moves(moves,new_board,piece.king,row + 1, min(row+3, 8), 1,piece ,right,skip);
+    if( !canJump(cur_board,row,col)){
+        boards.push_back(cur_board);
+        return;
     }
-    // cout <<"valid_end" <<endl;
+
+
+    if(cur_board.board[row][col].color == 'w'){
+        if(row -1 > -1 && col-1 > -1 && row -2 > -1 && col -2 > -1 && cur_board.board[row -1][col-1].color == 'b' && cur_board.board[row-1][col-1].color == '.'){
+            // cout << "J w move left"<< endl;
+            cur_board._remove(row -1,col-1);
+            cur_board.move_piece(row,col,row-2,col-2);
+            cur_board.path.push_back(make_pair(row-2,col-2));
+            Jump(boards,cur_board,row -2, col-2);
+        }
+        if(row -1 > -1 && col+1 < 8 && row -2 > -1 && col + 2 < 8 && cur_board.board[row -1][col+1].color== 'b' &&  cur_board.board[row-2][col+2].color == '.'){
+            //cout << "J w move right"<< endl;
+            cur_board._remove(row-1,col+1);
+            cur_board.move_piece(row,col,row-2,col+2);
+            cur_board.path.push_back(make_pair(row-2,col+2));
+            Jump(boards,cur_board,row-2, col+2);                
+        }
+    }
+    if(cur_board.board[row][col].color == 'b'){
+        if(row + 1 < 8 && col-1 > -1 && row + 2 < 8 && col -2 > -1 && cur_board.board[row +1][col-1].color == 'w'&& cur_board.board[row+2][col-2].color == '.'){
+            //cout << " J b move left"<< endl;
+            cur_board._remove(row + 1,col-1);
+            cur_board.move_piece(row,col,row+2,col-2);
+            cur_board.path.push_back(make_pair(row+2,col-2));
+            Jump(boards,cur_board,row+2, col-2);
+        }
+        if(row + 1 < 8 && col+1 < 8 && row +2 < 8 && col +2 < 8 && cur_board.board[row +1][col+1].color== 'w' &&  cur_board.board[row +2][col+2].color == '.'){
+            //cout << " J b move right"<< endl;
+            cur_board._remove(row+1,col+1);
+            cur_board.move_piece(row,col,row+2,col+2);
+            cur_board.path.push_back(make_pair(row+2,col+2));
+            Jump(boards,cur_board,row+2, col+2);
+        }
+    }
+
+        if(cur_board.board[row][col].color == 'w' && cur_board.board[row][col].king){
+
+        if(row -1 > -1 && col-1 > -1 && row -2 > -1 && col -2 > -1 && cur_board.board[row -1][col-1].color == 'b' && cur_board.board[row-1][col-1].color == '.'){
+            //cout << "J king w move up left"<< endl;
+            cur_board._remove(row -1,col-1);
+            cur_board.move_piece(row,col,row-2,col-2);
+            cur_board.path.push_back(make_pair(row-2,col-2));
+            Jump(boards,cur_board,row -2, col-2);
+        }
+        if(row -1 > -1 && col+1 < 8 && row -2 > -1 && col + 2 < 8 && cur_board.board[row -1][col+1].color== 'b' &&  cur_board.board[row-2][col+2].color == '.'){
+            //cout << "J king w move up right"<< endl;
+            cur_board._remove(row-1,col+1);
+            cur_board.move_piece(row,col,row-2,col+2);
+            cur_board.path.push_back(make_pair(row-2,col+2));
+            Jump(boards,cur_board,row-2, col+2);   
+        }
+        if(row + 1 < 8 && col-1 > -1 && row + 2 < 8 && col -2 > -1 && cur_board.board[row +1][col-1].color == 'b'&& cur_board.board[row+2][col-2].color == '.'){
+            //cout << " J king w move down left"<< endl;
+            cur_board._remove(row + 1,col-1);
+            cur_board.move_piece(row,col,row+2,col-2);
+            cur_board.path.push_back(make_pair(row+2,col-2));
+            Jump(boards,cur_board,row+2, col-2);
+        }
+        if(row + 1 < 8 && col+1 < 8 && row +2 < 8 && col +2 < 8 && cur_board.board[row +1][col+1].color== 'b' &&  cur_board.board[row +2][col+2].color == '.'){
+            //cout << " J king w move down right"<< endl;
+            cur_board._remove(row+1,col+1);
+            cur_board.move_piece(row,col,row+2,col+2);
+            cur_board.path.push_back(make_pair(row+2,col+2));
+            Jump(boards,cur_board,row+2, col+2);
+        }
+
+    }
+
+    if(cur_board.board[row][col].color == 'b' && cur_board.board[row][col].king){
+
+        if(row -1 > -1 && col-1 > -1 && row -2 > -1 && col -2 > -1 && cur_board.board[row -1][col-1].color == 'w' && cur_board.board[row-1][col-1].color == '.'){
+            //cout << "J king b move up left"<< endl;
+            cur_board._remove(row -1,col-1);
+            cur_board.move_piece(row,col,row-2,col-2);
+            cur_board.path.push_back(make_pair(row-2,col-2));
+            Jump(boards,cur_board,row -2, col-2);
+        }
+        if(row -1 > -1 && col+1 < 8 && row -2 > -1 && col + 2 < 8 && cur_board.board[row -1][col+1].color== 'w' &&  cur_board.board[row-2][col+2].color == '.'){
+            //cout << "J king b move up right"<< endl;
+            cur_board._remove(row-1,col+1);
+            cur_board.move_piece(row,col,row-2,col+2);
+            cur_board.path.push_back(make_pair(row-2,col+2));
+            Jump(boards,cur_board,row-2, col+2); 
+        }
+        if(row + 1 < 8 && col-1 > -1 && row + 2 < 8 && col -2 > -1 && cur_board.board[row +1][col-1].color == 'w'&& cur_board.board[row+2][col-2].color == '.'){
+            //cout << " J king b move down left"<< endl;
+            cur_board._remove(row + 1,col-1);
+            cur_board.move_piece(row,col,row+2,col-2);
+            cur_board.path.push_back(make_pair(row+2,col-2));
+            Jump(boards,cur_board,row+2, col-2);
+        }
+        if(row + 1 < 8 && col+1 < 8 && row +2 < 8 && col +2 < 8 && cur_board.board[row +1][col+1].color== 'w' &&  cur_board.board[row +2][col+2].color == '.'){
+            //cout << " J king b move down right"<< endl;
+            cur_board._remove(row+1,col+1);
+            cur_board.move_piece(row,col,row+2,col+2);
+            cur_board.path.push_back(make_pair(row+2,col+2));
+            Jump(boards,cur_board,row+2, col+2);
+        }
+
+    }
+
+
+
+    return;
+
+}
+
+void Board::Move(vector<Board>& boards,Board cur_board, int row, int col){
+
+    if(cur_board.board[row][col].color == 'w' || cur_board.board[row][col].king){
+        Board wleft = cur_board;
+        if(row -1 > -1 && col-1 > -1 && wleft.board[row -1][col-1].color == '.'){
+            //cout << "E w move left"<< endl;
+
+            wleft.move_piece(row,col,row -1,col-1);
+            wleft.path.push_back(make_pair(row-1,col-1));
+            //wleft.print_board();
+            boards.push_back(wleft);
+        } 
+        Board wright = cur_board;
+        if(row -1 > -1 && col+1 < 8 && wright.board[row -1][col+1].color == '.'){
+            //cout << "E w move right"<< endl;
+
+            wright.move_piece(row,col,row -1,col+1);
+            wright.path.push_back(make_pair(row -1,col+1));
+            //wright.print_board();
+            boards.push_back(wright);
+        }
+    }
+    if( cur_board.board[row][col].color == 'b' || cur_board.board[row][col].king){
+        Board bleft = cur_board;
+        if(row + 1 < 8 && col-1 > -1 && bleft.board[row +1][col-1].color == '.'){
+            //cout << "E b move left"<< endl;
+
+            bleft.move_piece(row,col,row +1,col-1);
+            bleft.path.push_back(make_pair(row+1,col-1));
+            //bleft.print_board();
+            boards.push_back(bleft);
+        }
+        Board bright = cur_board;
+        if(row + 1 < 8 && col+1 < 8 && bright.board[row +1][col+1].color == '.'){
+            //cout << "E b move right"<< endl;
+            bright.move_piece(row,col,row +1,col+1);
+            bright.path.push_back(make_pair(row+1,col+1));
+            //bright.print_board();
+            boards.push_back(bright);
+        }
+
+    }
+
+    return;
+}
+
+
+
+vector<Board> Game::get_all_moves(Board board, char color){
+    vector<Board> moves;
+    vector<pair<int,int>> all_pieces = board.get_all_piece(color);
+    // bool forceJump = false;
+    for(auto piece:all_pieces){
+        //cout << piece.first << piece.second << endl;
+        if(board.canJump(board,piece.first,piece.second)){
+            board.Jump(moves,board,piece.first,piece.second);
+        }
+
+    }
+    if(!moves.empty()) {
+        return moves;
+    }
+
+    for(auto piece:all_pieces){
+        if(board.canMove(board,piece.first,piece.second)){
+            board.Move(moves,board,piece.first,piece.second);  
+        }
+    }
+       
     return moves;
 }
 
-// function move 
-// if cannot move push return 
-// 4 dir
-
-
-
-void Board::Bleft_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int left,vector<Piece> skipped){
-    Piece last;
-    // cout<< "Bleft" << endl;
-    for(int i = start ; i <= stop; ++i){
-        if(left < 0 || i >= 8 || i < 0){
-            break;
-        }
-
-        Piece cur_piece = res_board.board[i][left];
-        if(cur_piece.color=='.'){
-            if(!skipped.empty() && last.is_empty){
-                // cout << "skip one" << endl;
-                //moves.push_back(res_board);
-                break;
-            }else if (!skipped.empty()){
-                // cout << "skip two" << endl;
-                // res_board._remove(last);
-                // cout << last.row << last.col << endl;
-                for(auto sk:skipped){
-                    res_board._remove(sk);
-                }
-                res_board.move_piece(start_piece,i,left);
-                res_board.path.push_back(make_pair(i,left));
-                moves.push_back(res_board);
-                start_piece.row = i;
-                start_piece.col = left;
-            }else{
-                res_board.move_piece(start_piece, i,left);
-                res_board.path.push_back(make_pair(i,left));
-                moves.push_back(res_board);
-                start_piece.row = i;
-                start_piece.col = left;
-            }
-            int row = stop;
-            // cout << "before got" << endl;
-            if(!last.is_empty){
-
-                row = min(i + 3, 7);
-                Bleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,left - 1,skipped);
-                Bright_moves(moves,res_board,is_king,i + step, row, step,start_piece,left + 1,skipped);
-                if(is_king){
-                    row = max(i - 3, 0);
-                    Wleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left - 1,skipped);
-                    Wright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left + 1,skipped);
-                }                
-            }
-            // moves.push_back(res_board);
-            break;
-
-        }else if(cur_piece.color == start_piece.color){
-            break;
-        }else{
-            if(!last.is_empty && last.color == cur_piece.color) break;
-            last = cur_piece;
-            skipped.push_back(cur_piece);
-        }
-        left --;
-    }
-    return;
-
-}
-
-
-void Board::Bright_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int right,vector<Piece> skipped){
-    Piece last;
-    // cout << "Bright" << endl;
-    for(int i = start; i <= stop; ++i){
-        if(right >=8 || i >=8 || i < 0){
-            // if(skipped.size() > 1){
-            //     moves.push_back(res_board);
-            // }
-            break;
-        }
-        Piece cur_piece = res_board.board[i][right];
-        if(cur_piece.color=='.'){
-            if(!skipped.empty() && last.is_empty){
-                // moves.push_back(res_board);
-                break;
-            }else if (!skipped.empty()){
-                // res_board._remove(last);
-                for(auto sk:skipped){
-                    res_board._remove(sk);
-                }
-                res_board.move_piece(start_piece,i,right);
-                res_board.path.push_back(make_pair(i,right));
-                moves.push_back(res_board);
-                //cout <<"b_left:"<< b_left<< " "<< "w_left:"<< w_left <<" "<<res_board.evaluation() <<endl;
-                // res_board.print_board(); 
-                start_piece.row = i;
-                start_piece.col = right;
-            }else{
-                res_board.move_piece(start_piece, i,right);
-                res_board.path.push_back(make_pair(i,right));
-                //cout <<"b_left:"<< b_left<< " "<< "w_left:"<< w_left <<" "<<res_board.evaluation() <<endl;
-                // res_board.print_board();
-                moves.push_back(res_board);
-                start_piece.row = i;
-                start_piece.col = right;
-            }
-            int row=stop;
-            if(!last.is_empty){
-                row = min(i + 3, 7);
-                Bleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,right - 1,skipped);
-                Bright_moves(moves,res_board,is_king,i + step, row, step,start_piece,right + 1,skipped);
-                if(is_king){
-                    row = max(i - 3, 0);
-                    Wleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right - 1,skipped);
-                    Wright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right + 1,skipped);
-                }                   
-            }
-
-            break;
-
-        }else if(cur_piece.color == start_piece.color){
-            break;
-        }else{
-            if(!last.is_empty && last.color == cur_piece.color) break;
-            last = cur_piece;
-            skipped.push_back(cur_piece);
-        }
-        right++;
-    }
-
-    return;
-}
-
-void Board::Wleft_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int left,vector<Piece> skipped){
-    Piece last;
-    // cout << "Wleft" << endl;
-    for(int i = start ; i >= stop; --i){
-        if(left < 0 || i < 0 || i >=8){
-            // if(skipped.size() > 1){
-            //     moves.push_back(res_board);
-            // }            
-            break;
-        }
-
-        Piece cur_piece = res_board.board[i][left];
-        if(cur_piece.color=='.'){
-            if(!skipped.empty() && last.is_empty){
-                // moves.push_back(res_board);
-                break;
-            }else if (!skipped.empty()){
-                //res_board._remove(last);
-                for(auto sk:skipped){
-                    res_board._remove(sk);
-                }
-                res_board.move_piece(start_piece,i,left);
-                res_board.path.push_back(make_pair(i,left));
-                moves.push_back(res_board);
-                //cout <<"b_left:"<< b_left<< " "<< "w_left:"<< w_left <<" "<<res_board.evaluation() <<endl;
-                // res_board.print_board();
-                start_piece.row = i;
-                start_piece.col = left;
-            }else{
-                res_board.move_piece(start_piece, i,left);
-                res_board.path.push_back(make_pair(i,left));
-                //cout <<"b_left:"<< b_left<< " "<< "w_left:"<< w_left <<" "<<res_board.evaluation() <<endl;
-                //res_board.print_board();
-                moves.push_back(res_board);
-                start_piece.row = i;
-                start_piece.col = left;
-            }
-            int row = stop;
-            if(!last.is_empty){
-                row = max(i - 3, 0);
-                Wleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,left - 1,skipped);
-                Wright_moves(moves,res_board,is_king,i + step, row, step,start_piece,left + 1,skipped);
-                if(is_king){
-                    row = min(i + 3, 7);
-                    Bleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left - 1,skipped);
-                    Bright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,left + 1,skipped);
-                }  
-            }
-
-            break;
-
-        }else if(cur_piece.color == start_piece.color){
-            break;
-        }else{
-            if(!last.is_empty && last.color == cur_piece.color) break;
-            last = cur_piece;
-            skipped.push_back(cur_piece);
-        }
-        left --;
-    }
-    return;
-
-}
-
-
-void Board::Wright_moves(vector<Board>& moves,Board res_board,bool is_king,int start, int stop, int step, Piece start_piece, int right,vector<Piece> skipped){
-    Piece last;
-    // cout << "Wright" << endl;
-    for(int i = start; i >= stop; --i){
-        // cout<< "Wright_for_loop" << endl;
-        // res_board.print_board();
-        if(right >=8|| i <0 || i >=8){
-            // if(skipped.size() > 1){
-            //     moves.push_back(res_board);
-            // }
-            break;
-        }
-        Piece cur_piece = res_board.board[i][right];
-        if(cur_piece.color=='.'){
-            if(!skipped.empty() && last.is_empty){
-                //moves.push_back(res_board);
-                break;
-            }else if (!skipped.empty()){
-                //res_board._remove(last);
-                for(auto sk:skipped){
-                    res_board._remove(sk);
-                }
-                res_board.move_piece(start_piece,i,right);
-                res_board.path.push_back(make_pair(i,right));
-                // res_board.print_board();
-                moves.push_back(res_board);
-                // cout <<"b_left:"<< b_left<< " "<< "w_left:"<< w_left <<" "<<res_board.evaluation() <<endl;
-                //res_board.print_board();
-                start_piece.row = i;
-                start_piece.col = right;
-            }else{
-                res_board.move_piece(start_piece, i,right);
-                res_board.path.push_back(make_pair(i,right));
-                // cout <<"b_left:"<< b_left<< " "<< "w_left:"<< w_left <<" "<<res_board.evaluation() <<endl;
-                // res_board.print_board();
-                moves.push_back(res_board);
-                start_piece.row = i;
-                start_piece.col = right;
-            }
-            int row=stop;
-            if(!last.is_empty){
-                row = max(i - 3, 0);
-                Wleft_moves(moves,res_board,is_king,i + step, row, step,start_piece,right - 1,skipped);
-                Wright_moves(moves,res_board,is_king,i + step, row, step,start_piece,right + 1,skipped);
-                if(is_king){
-                    row = min(i + 3, 7);
-                    Bleft_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right - 1,skipped);
-                    Bright_moves(moves,res_board,is_king,i - step, row, -step,start_piece,right + 1,skipped);
-                } 
-            }
-
-            break;
-
-        }else if(cur_piece.color == start_piece.color){
-            break;
-        }else{
-            if(!last.is_empty && last.color == cur_piece.color) break;
-            last = cur_piece;
-            // cout <<"jump color:"<< last.color << endl;
-            skipped.push_back(cur_piece);
-        }
-        right++;
-    }
-
-    return;
-}
 
 
 Board Game::min_max(Board board , int depth, char player,float alp,float beta ){
-    // cout << player << endl;
     if (depth ==0 || board.winner() != ' '){
         return board;
     }
-    // cout << player << endl;
     if(player == board.max_color){
         float MAX_eval = INT_MIN;
-        // cout <<  "max" << endl;
         Board best_move= board;
         vector<Board> all_moves = get_all_moves(board,board.max_color);
         for(auto move: all_moves){
-            //cout<< "depth_max" <<depth <<endl;
-            //move.print_board();
-            // cout << board.min_color << endl;
             Board evaluation = min_max(move, depth -1,board.min_color,alp,beta);
-            //cout << "b left: " << evaluation.b_left << " "<<"w left: "<< evaluation.w_left << endl;
-            //evaluation.print_board();
-            //cout <<"cur_max"<<MAX_eval <<"evaluate:"<<evaluation.evaluation() << endl;
             MAX_eval = max( MAX_eval, evaluation.evaluation());
             alp = max (alp , MAX_eval);
-            //cout<<"Max:" <<MAX_eval << endl;
             if(MAX_eval == evaluation.evaluation()){
                 best_move = move;
             }
@@ -507,19 +449,10 @@ Board Game::min_max(Board board , int depth, char player,float alp,float beta ){
     }else{
         float MIN_eval = INT_MAX;
         Board best_move= board;
-        // cout <<  "MIN" << endl;
         vector<Board> all_moves = get_all_moves(board,board.min_color);
-        // cout << board.min_color << endl;
         for(auto move: all_moves){
-            // cout<< "depth_min" <<depth <<endl;
-            // move.print_board();
-
             Board evaluation = min_max(move, depth -1,board.max_color,alp,beta);
-            //cout << "b left: " << evaluation.b_left << " "<<"w left: "<< evaluation.w_left << endl;
-            //evaluation.print_board();
-            //cout <<"cur_min: "<<MIN_eval <<"  evaluate: "<<evaluation.evaluation() << endl;
             MIN_eval = min( MIN_eval, evaluation.evaluation());
-            //cout<<"Min:" <<MIN_eval << endl;
             beta = min ( beta , MIN_eval);
             if(MIN_eval == evaluation.evaluation()){
                 best_move = move;
@@ -532,16 +465,9 @@ Board Game::min_max(Board board , int depth, char player,float alp,float beta ){
 }
 
 
-vector<Board> Game::get_all_moves(Board board, char color){
-    vector<Board> moves;
-    vector<Piece> all_pieces = board.get_all_piece(color);
-    for(auto piece:all_pieces){
-        Board temp_board = board;
-        vector<Board> temp = temp_board.get_valid_move(piece);
-        moves.insert(moves.end(), temp.begin(),temp.end());
-    }
-    return moves;
-}
+
+
+
 
 string Game::path_trans(int row, int col){
     string ans;
