@@ -1,7 +1,143 @@
-#include "homework11.h"
+#include <iostream>
+#include <queue>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <istream>
+#include <stdio.h>
+#include <ctype.h>
+#include<unordered_map>
+#include<list>
+#include <limits>
 
+
+using namespace std;
+// float inf = numeric_limits<float>::infinity();
 fstream infile;
 ofstream outfile;
+class Piece{
+public:
+
+    char color;
+    bool king ;
+    bool is_empty = true;
+    Piece():color('.'),king(false) {}
+	Piece(char color, bool king):color(color),king(king) {}
+
+};
+
+class Board{
+public:
+
+    vector<vector<Piece>> board;
+    vector<pair<int,int>> path;
+    vector<vector<Piece>> input();
+    void print_board();
+    void move_piece(int,int,int ,int );
+    int b_left = 0;
+    int w_left = 0;
+    int b_king = 0;
+    int w_king = 0;
+
+
+    string Pmethod;
+    char max_color;
+    char min_color;
+    double Pclock;
+
+    //evaluate 
+    vector<pair<int,int>> get_all_piece(char);
+    char winner();
+    void Jump(vector<Board>&,Board,int,int);
+    bool canJump(Board,int,int);
+    bool canMove(Board,int,int);
+    void Move(vector<Board>&,Board,int,int);
+    bool judge_King(char);
+    void _remove(int row, int col);
+    float evaluation();
+    int evaluationII();
+
+
+
+
+
+    Board():board({{}}) {}
+    Board(vector<vector<Piece>> board): board(board) {}
+    
+};
+
+class Game{
+public:
+
+    Board min_max(Board, int ,char player,float,float);
+    Board min_max3(Board, int ,char player,int,int);
+    vector<Board> get_all_moves(Board, char);
+    string path_trans(int, int);
+    void createOutput(Board&,Board&);
+    
+
+
+
+};
+
+
+int main(int argc, char const * argv[])
+{
+
+    Board board;
+
+    board.board = board.input();
+    Game game;
+    //play game
+    board.print_board();
+    const clock_t start_time = clock();
+    int depth = 1;
+    if(board.Pmethod == "SINGLE"){
+        depth = 3;
+    } else {
+        depth = 3;
+    }
+    Board board1 = game.min_max3(board,depth,board.max_color,INT_MIN,INT_MAX);
+    cout << board1.b_left << board1.w_left <<endl;
+    cout << "______________________" << endl;
+    cout << float(clock() - start_time) /CLOCKS_PER_SEC << endl;
+    board1.print_board();
+    game.createOutput(board,board1);
+    // int k = 0;
+    // Board host;
+    // host.board = host.input();
+    // while(host.winner()== ' ' && k < 150){
+    //     Game game;
+    //     cout << "............................" << endl;
+    //     cout << k << endl;
+    //     host.print_board();
+    //     if(host.max_color == 'b'){
+    //         Board res = game.min_max(host,7,host.max_color,INT_MIN,INT_MAX);
+    //     }else{
+    //         Board res = game.min_max(host,7,host.max_color,INT_MIN,INT_MAX);
+    //     }
+        
+    //     cout << "----------------------------" << endl;
+    //     res.print_board();
+    //     cout << "----------------------------" << endl;
+    //     host.b_left = res.b_left;
+    //     host.w_left = res.w_left;
+    //     host.w_king = res.w_king;
+    //     host.b_king = res.b_king;
+    //     host.board = res.board;
+    //     host.min_color = res.max_color;
+    //     host.max_color = res.min_color;
+    //     host.path.clear();
+    //     // cout << host.max_color << host.min_color << endl;
+    //     // cout << "............................" << endl;
+    //     k++;
+
+    // }
+
+    return 0;
+}
+
 
 vector<vector<Piece>> Board::input(){
 
@@ -358,7 +494,6 @@ void Board::Jump(vector<Board>& boards,Board cur_board,int row ,int col){
             cur_board._remove(row -1,col-1);
             cur_board.move_piece(row,col,row-2,col-2);
             cur_board.path.push_back(make_pair(row-2,col-2));
-            cout << row-2 << col-2 << endl;
             Jump(boards,cur_board,row -2, col-2);
         }
         if(row -1 > -1 && col+1 < 8 && row -2 > -1 && col + 2 < 8 && cur_board.board[row -1][col+1].color== 'w' &&  cur_board.board[row-2][col+2].color == '.'){
@@ -366,7 +501,6 @@ void Board::Jump(vector<Board>& boards,Board cur_board,int row ,int col){
             cur_board._remove(row-1,col+1);
             cur_board.move_piece(row,col,row-2,col+2);
             cur_board.path.push_back(make_pair(row-2,col+2));
-            cout << row-2 << col+2 << endl;
             Jump(boards,cur_board,row-2, col+2); 
         }
         if(row + 1 < 8 && col-1 > -1 && row + 2 < 8 && col -2 > -1 && cur_board.board[row +1][col-1].color == 'w'&& cur_board.board[row+2][col-2].color == '.'){
@@ -374,7 +508,6 @@ void Board::Jump(vector<Board>& boards,Board cur_board,int row ,int col){
             cur_board._remove(row + 1,col-1);
             cur_board.move_piece(row,col,row+2,col-2);
             cur_board.path.push_back(make_pair(row+2,col-2));
-            cout << row+2 << col-2 << endl;
             Jump(boards,cur_board,row+2, col-2);
         }
         if(row + 1 < 8 && col+1 < 8 && row +2 < 8 && col +2 < 8 && cur_board.board[row +1][col+1].color== 'w' &&  cur_board.board[row +2][col+2].color == '.'){
@@ -382,7 +515,6 @@ void Board::Jump(vector<Board>& boards,Board cur_board,int row ,int col){
             cur_board._remove(row+1,col+1);
             cur_board.move_piece(row,col,row+2,col+2);
             cur_board.path.push_back(make_pair(row+2,col+2));
-            cout << row+2 << col+2 << endl;
             Jump(boards,cur_board,row+2, col+2);
         }
 
@@ -581,7 +713,3 @@ void Game::createOutput(Board& board,Board&res_board){
         outfile << out;
     }
 }
-
-
-
-
