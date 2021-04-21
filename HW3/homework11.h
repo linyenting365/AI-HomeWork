@@ -4,11 +4,13 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
 // #include <vector>
 
 using namespace std;
 
-void readInput(vector<string> query, vector<string> &kb)
+void readInput(vector<string> &query, vector<string> &kb)
 {
     ifstream infile;
     int q, k;
@@ -47,11 +49,12 @@ void writeOutput(vector<bool> &result)
 
 class KB
 {
-public:
+
+private:
     struct predicate
     {
-        bool negate;
-        string name;
+        bool negate = false;
+        string name = "";
         vector<string> args;
         predicate(string &s)
         {
@@ -79,108 +82,194 @@ public:
             args.push_back(tmp);
         }
     };
+    static bool isLiteral(predicate &p);
+    static bool isVariable(string &s);
 
-    static void tell(string &fact);
-    static bool ask(string &query);
-};
+    class CNF
+    {
+    public:
+        static vector<predicate> convertToCNF(string fact);
+    };
+    class Database
+    {
+    private:
+        struct index
+        {
+            unordered_map<string, vector<pair<int, int>>> predicateLocation;
+        };
+        unordered_map<string, int> variable;
+        vector<vector<predicate>> allSentences;
+        unordered_map<string, index> position;
 
-class CNF
-{
+    public:
+        void standardizeVariable(vector<predicate> &p);
+        void Store(vector<predicate> sentence);
+        void Fetch();
+    };
+
+    Database db;
+
 public:
-    static vector<string> implicationElimination(pair<vector<string>, int> fact);
-    static vector<string> convertToCNF(string fact);
-    static pair<vector<string>, int> reArrange(string fact);
-};
-
-class Database
-{
+    void tell(string &fact);
+    bool ask(string &query);
+    static void printPredicate(predicate p);
 };
 
 void KB::tell(string &fact)
 {
-    vector<string> res = CNF::convertToCNF(fact);
+    vector<predicate> sentence = CNF::convertToCNF(fact);
+    db.Store(sentence);
+    // cout << db.position["Vaccinated"].predicateLocation["negatedLiteral"][0].first << " ";
+    // cout << position["Vaccinated"].predicateLocation["negatedLiteral"][0].second << endl;
 }
 
 bool KB::ask(string &query)
 {
+    db.Fetch();
     return true;
 }
 
-vector<string> CNF::implicationElimination(pair<vector<string>, int> fact)
+void KB::printPredicate(predicate p)
 {
-    if (fact.second == -1)
-        return fact.first;
-    fact.first[fact.second] = "|";
-    for (int i = 0; i < fact.second; i++)
+    cout << (p.negate == true ? "~" : "");
+    cout << p.name << "(";
+    for (string str : p.args)
     {
-        if (i - 1 >= 0 && fact.first[i - 1] == "~" && isalpha(fact.first[i][0]))
-        {
-            fact.first.erase(fact.first.begin() + (i - 1));
-        }
-        else if (isalpha(fact.first[i][0]))
-        {
-            fact.first[i] = "~" + fact.first[i];
-        }
-
-        if (fact.first[i] == "&")
-        {
-            fact.first[i] = "|";
-        }
+        cout << str << ",";
     }
-    // for (auto str : fact.first)
-    // {
-    //     cout << str << " ";
-    // }
-    // cout << endl;
-
-    return fact.first;
+    cout << ") ";
 }
 
-vector<string> CNF::convertToCNF(string fact)
+bool KB::isLiteral(predicate &p)
 {
-    pair<vector<string>, int> expression = reArrange(fact);
-    vector<string> res = implicationElimination(expression);
-    return res;
+    for (string s : p.args)
+    {
+        if (isVariable(s))
+            return false;
+    }
+    return true;
 }
 
-pair<vector<string>, int> CNF::reArrange(string fact)
+bool KB::isVariable(string &s)
 {
-    vector<string> res;
+    if (s.size() > 1)
+        return false;
+    return islower(s[0]);
+}
+
+vector<KB::predicate> KB::CNF::convertToCNF(string fact)
+{
+    vector<KB::predicate> sentence;
     fact.erase(remove_if(fact.begin(), fact.end(), static_cast<int (*)(int)>(isspace)), fact.end());
-
-    int isimplication = -1;
+    int index = 0;
     for (int i = 0; i < fact.size();)
     {
-
-        if (fact[i] == '&')
-            res.push_back("&"), i++;
-        else if (fact[i] == '~')
-            res.push_back("~"), i++;
-        else if (fact[i] == '=' && fact[i + 1] == '>')
-        {
-            res.push_back("=>");
-            isimplication = res.size() - 1;
-            i += 2;
-        }
-        else if (isalpha(fact[i]))
+        if (isalpha(fact[i]) && index == 0)
         {
             string temp;
-            while (fact[i] != ')' && i < fact.size())
+            bool negate = (fact[i - 1] == '~') ? true : false;
+            while (fact[i - 1] != ')' && i >= 0)
             {
                 temp += fact[i];
                 i++;
             }
-            temp += fact[i];
+            KB::predicate p(temp);
+            p.negate = negate;
+            p.negate = (p.negate == true) ? false : true;
+            sentence.push_back(p);
+        }
+        else if (fact[i] == '=' && fact[i + 1] == '>')
+        {
+            index = i;
+            i += 2;
+        }
+        else if (isalpha(fact[i]) && index != 0)
+        {
+            string temp;
+            bool negate = (fact[i - 1] == '~') ? true : false;
+            while (fact[i - 1] != ')' && i < fact.size())
+            {
+                temp += fact[i];
+                i++;
+            }
+            KB::predicate p(temp);
+            p.negate = negate;
+            sentence.push_back(p);
+        }
+        else
             i++;
-            res.push_back(temp);
+    }
+    return sentence;
+}
+
+void KB::Database::standardizeVariable(vector<predicate> &s)
+{
+    unordered_set<string> cur_var;
+    for (int i = 0; i < s.size(); i++)
+    {
+        vector<string> args = s[i].args;
+        for (int j = 0; j < args.size(); j++)
+        {
+            if (isVariable(args[j]))
+            {
+                string tmp = args[j];
+                if (!cur_var.count(tmp))
+                {
+                    cur_var.insert(tmp);
+                    variable[tmp]++;
+                }
+                args[j] = tmp + to_string(variable[tmp]);
+                // cout << args[j] << ",";
+            }
+        }
+        // cout << endl;
+    }
+}
+
+void KB::Database::Store(vector<predicate> p)
+{
+    standardizeVariable(p);
+    // cout << "standardize" << endl;
+    allSentences.push_back(p);
+    int pos = allSentences.size() - 1;
+    for (int i = 0; i < p.size(); i++)
+    {
+        if (isLiteral(p[i]))
+        {
+            if (p[i].negate)
+            {
+                cout << "literal ~" << p[i].name << endl;
+                position[p[i].name].predicateLocation["~literal"].push_back({pos, i});
+            }
+            else
+            {
+                cout << "literal " << p[i].name << endl;
+                position[p[i].name].predicateLocation["literal"].push_back({pos, i});
+            }
+        }
+        else
+        {
+            if (p[i].negate)
+            {
+                cout << "predicate ~" << p[i].name << endl;
+                position[p[i].name].predicateLocation["~predicate"].push_back({pos, i});
+            }
+            else
+            {
+                cout << "predicate " << p[i].name << endl;
+                position[p[i].name].predicateLocation["predicate"].push_back({pos, i});
+            }
         }
     }
+}
 
-    // for (auto str : res)
-    // {
-    //     cout << str << " ";
-    // }
-    // cout << endl;
-    // cout << isimplication << endl;
-    return {res, isimplication};
+void KB::Database::Fetch()
+{
+    vector<pair<int, int>> res = position["Healthy"].predicateLocation["~literal"];
+    // cout << res << endl;
+    for (auto r : res)
+    {
+        cout << r.first << " ";
+        cout << r.second << endl;
+    }
 }

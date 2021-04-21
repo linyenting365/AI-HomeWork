@@ -2,17 +2,19 @@
 
 int main()
 {
+    KB kb;
     vector<string> querys, facts;
     readInput(querys, facts);
+    // KB::CNF::convertToCNF("Learn(Come,x) => Train(Sit,x)");
     for (string &fact : facts)
-        KB::tell(fact);
+        kb.tell(fact);
     vector<bool> res;
+    cout << querys[0] << endl;
     for (string &query : querys)
     {
-        bool tmp = KB::ask(query);
+        bool tmp = kb.ask(query);
         res.push_back(tmp);
     }
-    res = {1, 0, 1};
     writeOutput(res);
     return 0;
 }
