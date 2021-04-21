@@ -9,12 +9,12 @@ int main()
     for (string &fact : facts)
         kb.tell(fact);
     vector<bool> res;
-    cout << querys[0] << endl;
-    for (string &query : querys)
-    {
-        bool tmp = kb.ask(query);
-        res.push_back(tmp);
-    }
+    // cout << querys[0] << endl;
+    // for (string &query : querys)
+    // {
+    //     bool tmp = kb.ask(query);
+    //     res.push_back(tmp);
+    // }
     writeOutput(res);
     return 0;
 }
